@@ -22,17 +22,24 @@ func main() {
 	)
 	flag.Parse()
 
-	if flag.NArg() != 1 {
+	var in io.Reader
+
+	switch flag.NArg() {
+	case 0:
+		in = os.Stdin
+	case 1:
+		fp, err := os.Open(flag.Arg(0))
+		if err != nil {
+			abort(err)
+		}
+		defer fp.Close()
+		in = fp
+	default:
 		flag.Usage()
 		os.Exit(2)
 	}
 
-	fp, err := os.Open(flag.Arg(0))
-	if err != nil {
-		abort(err)
-	}
-
-	r := csv.NewReader(fp)
+	r := csv.NewReader(in)
 
 	w := csv.NewWriter(os.Stdout)
 	defer w.Flush()
@@ -55,6 +62,7 @@ func main() {
 		}
 	} else {
 		if *h != "" {
+			var err error
 			idx, err = strconv.Atoi(*h)
 			if err != nil {
 				abort(err)
